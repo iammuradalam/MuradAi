@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Murad AI</title>
+<meta name="theme-color" content="#04050d">
+<meta name="description" content="Murad AI — a personal AI assistant you can talk to.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='.35' stop-color='%2336e4ff'/%3E%3Cstop offset='1' stop-color='%238b5cff'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='26' fill='url(%23g)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04050d; --bg2:#070a1a;
+  --panel:rgba(13,17,38,.58); --panel2:rgba(20,26,56,.55);
+  --line:rgba(120,160,255,.14); --line2:rgba(120,160,255,.28);
+  --text:#e9edff; --muted:#8c95bd; --dim:#5d6590;
+  --cyan:#36e4ff; --violet:#8b5cff; --pink:#ff4fd8; --green:#3dffb0; --red:#ff5c7a;
+  --grad:linear-gradient(135deg,var(--cyan),var(--violet) 60%,var(--pink));
+  --radius:18px;
+  --font:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --display:'Orbitron','Inter',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  --sidebar:290px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+::selection{background:rgba(54,228,255,.3)}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(140,160,255,.18);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- background ---------- */
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.aurora{position:fixed;inset:-20%;z-index:0;pointer-events:none;filter:blur(80px);opacity:.55;
+  background:
+   radial-gradient(40% 35% at 20% 15%,rgba(139,92,255,.35),transparent 70%),
+   radial-gradient(35% 30% at 85% 20%,rgba(54,228,255,.22),transparent 70%),
+   radial-gradient(45% 40% at 70% 95%,rgba(255,79,216,.14),transparent 70%);
+  animation:drift 26s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate3d(4%,-3%,0) rotate(6deg) scale(1.06)}}
+.grid{position:fixed;left:-50%;right:-50%;bottom:-10%;height:55%;z-index:0;pointer-events:none;opacity:.22;
+  background-image:linear-gradient(rgba(54,228,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(54,228,255,.5) 1px,transparent 1px);
+  background-size:60px 60px;transform:perspective(500px) rotateX(62deg);transform-origin:bottom;
+  -webkit-mask-image:linear-gradient(to top,#000 0%,transparent 75%);mask-image:linear-gradient(to top,#000 0%,transparent 75%);
+  animation:gridmove 8s linear infinite}
+@keyframes gridmove{to{background-position:0 60px,0 0}}
+
+/* ---------- layout ---------- */
+.app{position:relative;z-index:1;display:flex;height:100%;height:100dvh}
+aside{width:var(--sidebar);flex-shrink:0;display:flex;flex-direction:column;gap:12px;padding:18px 14px;
+  background:linear-gradient(180deg,rgba(10,13,32,.82),rgba(6,8,22,.82));border-right:1px solid var(--line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 6px 8px}
+.brand .dot{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--cyan) 35%,var(--violet) 75%);box-shadow:0 0 18px rgba(54,228,255,.7),0 0 40px rgba(139,92,255,.4);animation:breath 4s ease-in-out infinite}
+@keyframes breath{50%{transform:scale(.88);box-shadow:0 0 10px rgba(54,228,255,.5),0 0 26px rgba(139,92,255,.3)}}
+.brand b{font-family:var(--display);font-weight:900;letter-spacing:.18em;font-size:15px}
+.brand b span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.newchat{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;border-radius:14px;font-weight:600;font-size:14px;
+  background:linear-gradient(135deg,rgba(54,228,255,.16),rgba(139,92,255,.2));border:1px solid var(--line2);transition:.2s}
+.newchat:hover{box-shadow:0 0 0 1px rgba(54,228,255,.4),0 0 24px rgba(54,228,255,.18);transform:translateY(-1px)}
+.search{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.search input{flex:1;background:none;border:0;outline:0;font-size:13.5px}
+.search svg{opacity:.5}
+#chatList{flex:1;overflow-y:auto;margin:0 -6px;padding:0 6px}
+.group{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:14px 8px 6px;font-weight:600}
+.citem{position:relative;display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;padding:9px 34px 9px 11px;border-radius:11px;border:1px solid transparent;transition:.15s}
+.citem:hover{background:rgba(255,255,255,.04)}
+.citem.active{background:linear-gradient(90deg,rgba(54,228,255,.12),rgba(139,92,255,.08));border-color:var(--line2)}
+.citem.active::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:2px;border-radius:2px;background:var(--grad)}
+.citem .t{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.citem .d{font-size:11px;color:var(--dim)}
+.citem .del{position:absolute;right:6px;top:50%;transform:translateY(-50%);opacity:0;padding:5px;border-radius:8px;color:var(--muted)}
+.citem:hover .del{opacity:1}.citem .del:hover{color:var(--red);background:rgba(255,92,122,.1)}
+.side-foot{display:flex;gap:8px}
+.side-foot button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.02);font-size:13px;color:var(--muted);transition:.15s}
+.side-foot button:hover{color:var(--text);border-color:var(--line2);background:rgba(255,255,255,.05)}
+
+main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+header{display:flex;align-items:center;gap:12px;padding:14px 22px;border-bottom:1px solid transparent}
+header .title{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:13px;letter-spacing:.22em;font-weight:700}
+.status{display:flex;align-items:center;gap:7px;font-family:var(--font);letter-spacing:0;font-weight:500;font-size:12px;color:var(--muted);padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.status i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+.status.thinking i{background:var(--violet);box-shadow:0 0 10px var(--violet);animation:blink .7s infinite}
+.status.listening i{background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:blink .5s infinite}
+.status.speaking i{background:var(--pink);box-shadow:0 0 10px var(--pink);animation:blink .4s infinite}
+.status.error i{background:var(--red);box-shadow:0 0 10px var(--red)}
+@keyframes blink{50%{opacity:.3}}
+.spacer{flex:1}
+.iconbtn{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--muted);transition:.15s}
+.iconbtn:hover{color:var(--text);border-color:var(--line2);background:rgba(255,255,255,.06)}
+.talkbtn{display:flex;align-items:center;gap:8px;padding:8px 14px 8px 10px;border-radius:99px;font-size:13px;font-weight:600;border:1px solid rgba(54,228,255,.35);
+  background:linear-gradient(135deg,rgba(54,228,255,.14),rgba(139,92,255,.18));box-shadow:0 0 20px rgba(54,228,255,.12);transition:.2s}
+.talkbtn:hover{box-shadow:0 0 28px rgba(54,228,255,.3)}
+.talkbtn .mini{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--cyan) 40%,var(--violet));animation:breath 2.4s infinite}
+#menuBtn{display:none}
+
+#thread{flex:1;overflow-y:auto;scroll-behavior:smooth;position:relative}
+.wrap{max-width:820px;margin:0 auto;padding:10px 24px 30px}
+#welcome{display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:3vh}
+#core{width:min(300px,62vw);height:min(300px,62vw)}
+#welcome h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,38px);letter-spacing:.04em;margin-top:6px}
+#welcome h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+#welcome p{color:var(--muted);margin-top:10px;font-size:15px}
+.chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:28px;width:100%;max-width:620px}
+.chip{text-align:left;padding:13px 15px;border-radius:14px;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(10px);font-size:13.5px;color:var(--muted);transition:.2s;display:flex;gap:10px;align-items:flex-start}
+.chip b{display:block;color:var(--text);font-weight:600;margin-bottom:2px}
+.chip:hover{border-color:rgba(54,228,255,.4);transform:translateY(-2px);box-shadow:0 10px 30px -10px rgba(54,228,255,.3)}
+.chip .ic{font-size:18px;line-height:1.2}
+
+/* ---------- messages ---------- */
+.msg{display:flex;gap:14px;margin:22px 0;animation:rise .35s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+.msg.user{justify-content:flex-end}
+.avatar{flex-shrink:0;width:32px;height:32px;border-radius:50%;margin-top:2px;background:radial-gradient(circle at 35% 30%,#fff,var(--cyan) 35%,var(--violet) 80%);box-shadow:0 0 16px rgba(54,228,255,.45)}
+.msg.busy .avatar{animation:spinGlow 1.2s linear infinite}
+@keyframes spinGlow{50%{box-shadow:0 0 26px rgba(139,92,255,.9);transform:scale(.9)}}
+.body{min-width:0;max-width:100%}
+.msg.user .body{max-width:78%}
+.bubble{line-height:1.68;font-size:15px;overflow-wrap:anywhere}
+.msg.user .bubble{padding:11px 16px;border-radius:18px 18px 4px 18px;background:linear-gradient(135deg,rgba(54,228,255,.14),rgba(139,92,255,.2));border:1px solid var(--line2);white-space:pre-wrap}
+.msg.ai .bubble{padding-top:4px}
+.msg.err .bubble{color:#ffb3c1;padding:11px 15px;border-radius:14px;background:rgba(255,92,122,.08);border:1px solid rgba(255,92,122,.3)}
+.meta{display:flex;align-items:center;gap:4px;margin-top:6px;font-size:11.5px;color:var(--dim)}
+.msg.user .meta{justify-content:flex-end}
+.meta button{padding:5px;border-radius:8px;color:var(--dim);opacity:.8;transition:.15s;display:grid;place-items:center}
+.meta button:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.memchip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--cyan);padding:4px 10px;border-radius:99px;border:1px solid rgba(54,228,255,.3);background:rgba(54,228,255,.07)}
+.bubble p{margin:0 0 .8em}.bubble p:last-child{margin-bottom:0}
+.bubble h1,.bubble h2,.bubble h3{font-family:var(--font);font-weight:600;margin:1.1em 0 .5em;line-height:1.3}
+.bubble h1{font-size:1.3em}.bubble h2{font-size:1.15em}.bubble h3{font-size:1.03em}
+.bubble ul,.bubble ol{margin:0 0 .8em 1.4em}.bubble li{margin:.25em 0}
+.bubble li::marker{color:var(--cyan)}
+.bubble a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(54,228,255,.4)}
+.bubble strong{color:#fff;font-weight:600}
+.bubble blockquote{border-left:2px solid var(--violet);padding:.2em 0 .2em 1em;color:var(--muted);margin:0 0 .8em}
+.bubble hr{border:0;height:1px;background:var(--line2);margin:1.2em 0}
+.bubble code{font-family:var(--mono);font-size:.86em;background:rgba(139,92,255,.14);border:1px solid rgba(139,92,255,.25);padding:.1em .4em;border-radius:6px}
+.bubble pre{margin:0 0 .9em;border-radius:14px;border:1px solid var(--line);background:rgba(3,5,14,.75);overflow:hidden}
+.bubble pre .ch{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;font-family:var(--mono);font-size:11.5px;color:var(--muted);border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.bubble pre .ch button{font-size:11.5px;color:var(--muted);padding:2px 8px;border-radius:6px}.bubble pre .ch button:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.bubble pre code{display:block;background:none;border:0;padding:14px;overflow-x:auto;font-size:13px;line-height:1.6;white-space:pre}
+.bubble table{border-collapse:collapse;margin:0 0 .9em;font-size:14px;display:block;overflow-x:auto}
+.bubble th,.bubble td{border:1px solid var(--line2);padding:7px 11px;text-align:left}
+.bubble th{background:rgba(54,228,255,.08);font-weight:600}
+.cursor{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;margin-left:2px;background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:blink .8s infinite}
+.thinking{display:flex;gap:6px;padding:12px 0}
+.thinking span{width:8px;height:8px;border-radius:50%;background:var(--grad);animation:bounce 1.1s infinite}
+.thinking span:nth-child(2){animation-delay:.15s}.thinking span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-7px);opacity:1}}
+
+/* attachments */
+.files{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.msg.user .files{justify-content:flex-end}
+.fcard{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 8px;border-radius:12px;border:1px solid var(--line2);background:rgba(10,14,34,.7);font-size:12.5px;max-width:260px}
+.fcard .fi{width:34px;height:34px;flex-shrink:0;border-radius:9px;display:grid;place-items:center;font-size:10px;font-weight:700;letter-spacing:.05em;color:#04050d;background:var(--grad)}
+.fcard .fn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.fcard .fs{color:var(--dim);font-size:11px}
+.fcard img{width:34px;height:34px;border-radius:9px;object-fit:cover;flex-shrink:0}
+.fcard.img{padding:4px}.fcard.img img{width:150px;height:110px;border-radius:9px}
+#pending .fcard.img img{width:56px;height:56px}
+.fcard .x{margin-left:4px;color:var(--dim);padding:3px;border-radius:6px}.fcard .x:hover{color:var(--red)}
+.fcard.loading .fi{animation:blink .7s infinite}
+
+/* ---------- composer ---------- */
+.composer{padding:8px 24px 16px;padding-bottom:max(16px,env(safe-area-inset-bottom))}
+.cbox{max-width:820px;margin:0 auto;position:relative;border-radius:22px;padding:2px;background:linear-gradient(135deg,rgba(54,228,255,.45),rgba(139,92,255,.35),rgba(255,79,216,.3));box-shadow:0 10px 50px -12px rgba(54,228,255,.35)}
+.cbox.drag{box-shadow:0 0 0 2px var(--cyan),0 0 60px rgba(54,228,255,.5)}
+.cinner{border-radius:20px;background:rgba(7,9,24,.94);backdrop-filter:blur(20px);padding:10px 10px 10px 14px}
+#pending{display:none}#pending.on{display:flex;padding:2px 0 10px}
+.crow{display:flex;align-items:flex-end;gap:8px}
+#input{flex:1;resize:none;border:0;outline:0;background:none;font-size:15px;line-height:1.55;max-height:200px;padding:8px 2px;min-height:24px}
+#input::placeholder{color:var(--dim)}
+.cbtn{width:40px;height:40px;flex-shrink:0;border-radius:13px;display:grid;place-items:center;color:var(--muted);transition:.15s}
+.cbtn:hover{color:var(--text);background:rgba(255,255,255,.06)}
+#micBtn.rec{color:#04050d;background:var(--cyan);box-shadow:0 0 22px var(--cyan);animation:breath 1.2s infinite}
+#sendBtn{color:#04050d;background:var(--grad);box-shadow:0 0 20px rgba(54,228,255,.35)}
+#sendBtn:disabled{opacity:.35;box-shadow:none;cursor:default}
+#sendBtn.stop{background:#fff}
+.hint{text-align:center;font-size:11.5px;color:var(--dim);margin-top:9px}
+
+/* ---------- talk overlay ---------- */
+#talk{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:radial-gradient(60% 60% at 50% 45%,rgba(30,20,80,.55),rgba(2,3,10,.96));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#talk.on{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+#talkCore{width:min(440px,86vw);height:min(440px,86vw);cursor:pointer}
+#talkState{font-family:var(--display);letter-spacing:.3em;font-size:13px;color:var(--cyan);text-transform:uppercase;text-shadow:0 0 14px var(--cyan)}
+#talkText{max-width:680px;min-height:3.2em;padding:0 24px;text-align:center;font-size:clamp(16px,2.4vw,20px);line-height:1.5;color:var(--text)}
+#talkText .you{color:var(--muted)}
+.talkctl{display:flex;gap:14px;margin-top:22px}
+.talkctl button{display:flex;align-items:center;gap:8px;padding:12px 20px;border-radius:99px;border:1px solid var(--line2);background:rgba(255,255,255,.04);font-weight:600;font-size:14px}
+.talkctl button:hover{background:rgba(255,255,255,.09)}
+.talkctl .end{border-color:rgba(255,92,122,.5);color:#ffc2cd;background:rgba(255,92,122,.12)}
+.hud{position:absolute;inset:24px;pointer-events:none;border:1px solid rgba(54,228,255,.08);border-radius:28px}
+.hud::before,.hud::after{content:"";position:absolute;width:40px;height:40px;border:2px solid rgba(54,228,255,.5)}
+.hud::before{top:-1px;left:-1px;border-right:0;border-bottom:0;border-radius:28px 0 0 0}
+.hud::after{bottom:-1px;right:-1px;border-left:0;border-top:0;border-radius:0 0 28px 0}
+.hudlabel{position:absolute;top:40px;left:50px;font-family:var(--mono);font-size:11px;color:rgba(54,228,255,.6);letter-spacing:.12em}
+.hudlabel.r{left:auto;right:50px;text-align:right}
+
+/* ---------- dialogs ---------- */
+dialog{margin:auto;border:1px solid var(--line2);border-radius:22px;background:rgba(9,12,30,.96);color:var(--text);width:min(560px,94vw);max-height:88vh;padding:0;box-shadow:0 30px 80px -20px rgba(0,0,0,.8),0 0 60px -20px rgba(54,228,255,.35)}
+dialog::backdrop{background:rgba(2,3,10,.7);backdrop-filter:blur(6px)}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line)}
+.dh h2{font-family:var(--display);font-size:14px;letter-spacing:.2em}
+.db{padding:18px 22px;overflow-y:auto;max-height:calc(88vh - 140px)}
+.df{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--line)}
+.sec{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin:18px 0 10px;font-weight:600}.sec:first-child{margin-top:0}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field label{font-size:13px;color:var(--muted)}
+.field small{font-size:11.5px;color:var(--dim);line-height:1.5}
+.field small a{color:var(--cyan)}
+.in{padding:10px 12px;border-radius:11px;border:1px solid var(--line2);background:rgba(255,255,255,.03);outline:0;font-size:14px;width:100%}
+.in:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(54,228,255,.12)}
+select.in option{background:#0b0f26}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.check{display:flex;align-items:center;gap:10px;font-size:14px;margin:6px 0 12px}
+.check input{accent-color:var(--cyan);width:17px;height:17px}
+.btn{padding:10px 16px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.04);font-weight:600;font-size:13.5px}
+.btn:hover{background:rgba(255,255,255,.09)}
+.btn.primary{border:0;color:#04050d;background:var(--grad)}
+.btn.danger{border-color:rgba(255,92,122,.45);color:#ffb3c1}
+.memitem{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.02);margin-bottom:8px;font-size:14px}
+.memitem div{flex:1}.memitem small{display:block;color:var(--dim);font-size:11px;margin-top:3px}
+.memitem button{color:var(--dim);padding:3px}.memitem button:hover{color:var(--red)}
+.empty{color:var(--dim);font-size:13.5px;text-align:center;padding:20px}
+#toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);z-index:80;padding:10px 16px;border-radius:12px;background:rgba(12,16,40,.95);border:1px solid var(--line2);font-size:13.5px;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#toast.on{opacity:1;transform:translateX(-50%)}
+#dropHint{position:fixed;inset:0;z-index:60;display:none;place-items:center;background:rgba(4,5,13,.75);backdrop-filter:blur(6px);font-family:var(--display);letter-spacing:.2em;color:var(--cyan);font-size:16px;pointer-events:none}
+#dropHint.on{display:grid}
+#dropHint div{padding:40px 60px;border:2px dashed rgba(54,228,255,.6);border-radius:24px}
+.backdrop{display:none}
+
+@media (max-width:860px){
+  aside{position:fixed;z-index:40;left:0;top:0;bottom:0;transform:translateX(-105%);transition:transform .28s ease;box-shadow:20px 0 60px rgba(0,0,0,.6)}
+  aside.open{transform:none}
+  .backdrop.on{display:block;position:fixed;inset:0;z-index:35;background:rgba(0,0,0,.55)}
+  #menuBtn{display:grid}
+  header{padding:12px 14px}
+  header .title .lbl{display:none}
+  .wrap{padding:6px 16px 24px}
+  .composer{padding:6px 12px 12px}
+  .chips{grid-template-columns:1fr}
+  .chip:nth-child(n+3){display:none}
+  .msg.user .body{max-width:88%}
+  .talkbtn span{display:none}.talkbtn{padding:8px}
+  .hudlabel{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="aurora"></div><div class="grid"></div><canvas id="bg"></canvas>
+
+<div class="app">
+  <aside id="sidebar">
+    <div class="brand"><div class="dot"></div><b>MURAD <span>AI</span></b></div>
+    <button class="newchat" id="newChatBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New chat</button>
+    <label class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="searchInput" placeholder="Search chats"></label>
+    <div id="chatList"></div>
+    <div class="side-foot">
+      <button id="memoryBtn" title="Memory"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0-6 6c0 2.2 1.2 3.7 2.4 4.9.8.8 1.1 1.5 1.1 2.6V18h5v-1.5c0-1.1.3-1.8 1.1-2.6C16.8 12.7 18 11.2 18 9a6 6 0 0 0-6-6Z"/><path d="M9.5 21h5"/></svg>Memory</button>
+      <button id="settingsBtn" title="Settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>Settings</button>
+    </div>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+
+  <main>
+    <header>
+      <button class="iconbtn" id="menuBtn" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+      <div class="title"><span class="lbl">MURAD AI</span><div class="status" id="status"><i></i><span>Online</span></div></div>
+      <div class="spacer"></div>
+      <button class="talkbtn" id="talkBtn" title="Talk to Murad AI"><div class="mini"></div><span>Talk</span></button>
+    </header>
+
+    <section id="thread">
+      <div class="wrap">
+        <div id="welcome">
+          <canvas id="core"></canvas>
+          <h1 id="greet">Hello, <span>I'm Murad AI</span></h1>
+          <p>Ask anything, drop in a PDF or photo, or tap <b>Talk</b> to have a conversation.</p>
+          <div class="chips">
+            <button class="chip" data-q="What can you do? Give me a quick tour of your abilities."><span class="ic">✦</span><span><b>What can you do?</b>A quick tour of my abilities</span></button>
+            <button class="chip" data-q="Help me plan a productive study week. Ask me what subjects I have first."><span class="ic">◷</span><span><b>Plan my week</b>Study, work and free time</span></button>
+            <button class="chip" data-q="Explain how a PLC works in simple words, with a real factory example."><span class="ic">⚙</span><span><b>Explain like I'm new</b>How a PLC works</span></button>
+            <button class="chip" data-q="Teach me 5 useful Finnish phrases for everyday life, with pronunciation."><span class="ic">✎</span><span><b>Learn Finnish</b>5 everyday phrases</span></button>
+          </div>
+        </div>
+        <div id="messages"></div>
+      </div>
+    </section>
+
+    <div class="composer">
+      <div class="cbox" id="cbox">
+        <div class="cinner">
+          <div class="files" id="pending"></div>
+          <div class="crow">
+            <button class="cbtn" id="attachBtn" title="Attach PDF, image, Word or text file"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21 11.5-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></button>
+            <textarea id="input" rows="1" placeholder="Message Murad AI…"></textarea>
+            <button class="cbtn" id="micBtn" title="Dictate"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+            <button class="cbtn" id="sendBtn" title="Send" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="fileInput" multiple hidden accept=".pdf,.docx,.txt,.md,.csv,.json,.html,.css,.js,.ts,.py,.php,.java,.c,.cpp,.xml,.log,image/*">
+      <div class="hint">Murad AI can make mistakes. Chats are saved in this browser.</div>
+    </div>
+  </main>
+</div>
+
+<div id="talk">
+  <div class="hud"></div>
+  <div class="hudlabel">MURAD AI // VOICE LINK<br><span id="hudClock"></span></div>
+  <div class="hudlabel r">NEURAL CORE ONLINE<br><span id="hudLang"></span></div>
+  <canvas id="talkCore" title="Tap to talk / interrupt"></canvas>
+  <div id="talkState">Ready</div>
+  <div id="talkText">Tap the core and start speaking</div>
+  <div class="talkctl">
+    <button id="talkMute"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Pause</span></button>
+    <button class="end" id="talkEnd"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>End</button>
+  </div>
+</div>
+
+<dialog id="settingsDlg">
+  <div class="dh"><h2>SETTINGS</h2><button class="iconbtn" data-close>✕</button></div>
+  <div class="db">
+    <div class="sec">You</div>
+    <div class="field"><label>Your name</label><input class="in" id="sName" placeholder="e.g. Murad"></div>
+    <div class="field"><label>Extra instructions for Murad AI (optional)</label><textarea class="in" id="sPersona" rows="2" placeholder="e.g. Answer short. I study Automation Engineering in Finland."></textarea></div>
+
+    <div class="sec">Connection</div>
+    <div class="field"><label>Mode</label>
+      <select class="in" id="sMode">
+        <option value="server">My server (api.php on my domain) — key stays hidden</option>
+        <option value="direct">Direct (my key saved in this browser only)</option>
+      </select>
+    </div>
+    <div id="serverFields">
+      <div class="row">
+        <div class="field"><label>Server endpoint</label><input class="in" id="sEndpoint" placeholder="api.php"></div>
+        <div class="field"><label>Passcode</label><input class="in" id="sPass" type="password" placeholder="if you set one"></div>
+      </div>
+      <div class="field"><button class="btn" id="testBtn" type="button">Test connection</button><small id="testOut"></small></div>
+    </div>
+    <div id="directFields">
+      <div class="row">
+        <div class="field"><label>Provider</label>
+          <select class="in" id="sProvider"><option value="groq">Groq (free)</option><option value="gemini">Google Gemini (free)</option><option value="openrouter">OpenRouter (free models)</option></select>
+        </div>
+        <div class="field"><label>Model (optional)</label><input class="in" id="sModel" placeholder="default"></div>
+      </div>
+      <div class="field"><label>API key</label><input class="in" id="sKey" type="password" placeholder="paste your free key">
+        <small>Free keys: <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a> · <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Gemini</a> · <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a>. Only use Direct mode on your own device.</small></div>
+    </div>
+
+    <div class="sec">Voice</div>
+    <div class="row">
+      <div class="field"><label>Language</label>
+        <select class="in" id="sLang">
+          <option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="fi-FI">Suomi</option><option value="sv-SE">Svenska</option><option value="ne-NP">नेपाली</option><option value="hi-IN">हिन्दी</option><option value="bn-BD">বাংলা</option><option value="ur-PK">اردو</option>
+        </select>
+      </div>
+      <div class="field"><label>Voice</label><select class="in" id="sVoice"></select></div>
+    </div>
+    <div class="field"><label>Speaking speed <span id="rateVal"></span></label><input type="range" id="sRate" min="0.7" max="1.5" step="0.05"></div>
+    <label class="check"><input type="checkbox" id="sAuto">Read every answer out loud</label>
+
+    <div class="sec">Data</div>
+    <div class="row" style="flex-wrap:wrap">
+      <button class="btn" id="exportBtn" type="button">Export chats</button>
+      <button class="btn" id="importBtn" type="button">Import</button>
+      <button class="btn danger" id="clearBtn" type="button">Delete everything</button>
+    </div>
+    <input type="file" id="importFile" accept=".json" hidden>
+  </div>
+  <div class="df"><button class="btn" data-close>Cancel</button><button class="btn primary" id="saveSettings">Save</button></div>
+</dialog>
+
+<dialog id="memoryDlg">
+  <div class="dh"><h2>MEMORY</h2><button class="iconbtn" data-close>✕</button></div>
+  <div class="db">
+    <p style="color:var(--muted);font-size:13.5px;line-height:1.6;margin-bottom:14px">Things Murad AI remembers about you in every chat. Say "remember that…" in a chat, or add one here.</p>
+    <div class="row" style="margin-bottom:14px"><input class="in" id="memInput" placeholder="e.g. I live in Tampere"><button class="btn primary" id="memAdd" style="flex:0 0 auto">Add</button></div>
+    <div id="memList"></div>
+  </div>
+</dialog>
+
+<div id="dropHint"><div>DROP FILES TO ANALYZE</div></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* =========================================================
+   MURAD AI — client
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- storage (IndexedDB, falls back to localStorage) ---------- */
+const DB = (() => {
+  let dbp = null;
+  function open() {
+    if (dbp) return dbp;
+    dbp = new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open('murad-ai', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      } catch (e) { rej(e); }
+    });
+    return dbp;
+  }
+  return {
+    async get(k, d) {
+      try {
+        const db = await open();
+        return await new Promise((res, rej) => {
+          const q = db.transaction('kv').objectStore('kv').get(k);
+          q.onsuccess = () => res(q.result === undefined ? d : q.result);
+          q.onerror = () => rej(q.error);
+        });
+      } catch { try { const v = localStorage.getItem('mai.' + k); return v ? JSON.parse(v) : d; } catch { return d; } }
+    },
+    async set(k, v) {
+      try {
+        const db = await open();
+        await new Promise((res, rej) => {
+          const tx = db.transaction('kv', 'readwrite');
+          tx.objectStore('kv').put(v, k);
+          tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+        });
+      } catch { try { localStorage.setItem('mai.' + k, JSON.stringify(v)); } catch { toast('Storage is full — export and delete old chats.'); } }
+    }
+  };
+})();
+
+let chats = [], memories = [], current = null;
+let settings = {
+  mode: 'server', endpoint: 'api.php', passcode: '',
+  provider: 'groq', apiKey: '', model: '',
+  name: '', persona: '', lang: 'en-US', voice: '', rate: 1, autoSpeak: false
+};
+const saveChats = () => DB.set('chats', chats);
+const saveMem = () => DB.set('memories', memories);
+const saveSettings = () => DB.set('settings', settings);
+
+/* ---------- UI refs ---------- */
+const el = {
+  thread: $('#thread'), messages: $('#messages'), welcome: $('#welcome'), input: $('#input'),
+  send: $('#sendBtn'), mic: $('#micBtn'), status: $('#status'), list: $('#chatList'),
+  sidebar: $('#sidebar'), backdrop: $('#backdrop'), pending: $('#pending'), cbox: $('#cbox')
+};
+let busy = false, abortCtrl = null, pendingFiles = [], state = 'idle';
+
+function setState(s, label) {
+  state = s;
+  el.status.className = 'status ' + (s === 'idle' ? '' : s);
+  el.status.querySelector('span').textContent = label || ({idle:'Online', thinking:'Thinking', listening:'Listening', speaking:'Speaking', error:'Error'}[s]);
+}
+function toast(msg, ms = 2600) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), ms);
+}
+
+/* =========================================================
+   Visuals: background network + energy core
+   ========================================================= */
+function fitCanvas(c) {
+  const d = Math.min(window.devicePixelRatio || 1, 2), r = c.getBoundingClientRect();
+  const w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d));
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  return d;
+}
+const bg = $('#bg'), bgx = bg.getContext('2d');
+const pts = Array.from({length: 70}, () => ({x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * .00025, vy: (Math.random() - .5) * .00025, r: Math.random() * 1.4 + .3}));
+function drawBg() {
+  const d = fitCanvas(bg), w = bg.width, h = bg.height;
+  bgx.clearRect(0, 0, w, h);
+  for (const p of pts) {
+    p.x = (p.x + p.vx + 1) % 1; p.y = (p.y + p.vy + 1) % 1;
+    bgx.fillStyle = 'rgba(160,200,255,.55)';
+    bgx.beginPath(); bgx.arc(p.x * w, p.y * h, p.r * d, 0, 7); bgx.fill();
+  }
+  const maxd = 130 * d;
+  for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+    const a = pts[i], b = pts[j], dx = (a.x - b.x) * w, dy = (a.y - b.y) * h, dist = Math.hypot(dx, dy);
+    if (dist < maxd) { bgx.strokeStyle = `rgba(54,228,255,${(1 - dist / maxd) * .12})`; bgx.lineWidth = d * .7; bgx.beginPath(); bgx.moveTo(a.x * w, a.y * h); bgx.lineTo(b.x * w, b.y * h); bgx.stroke(); }
+  }
+}
+
+let energy = .15, spin = 1, micLevel = 0, speakPulse = 0;
+const orbParticles = Array.from({length: 46}, (_, i) => ({a: Math.random() * 6.28, r: .78 + Math.random() * .5, s: (.2 + Math.random() * .6) * (i % 2 ? 1 : -1), z: Math.random()}));
+function drawCore(c, t) {
+  if (!c.offsetParent && c.id !== 'talkCore') return;
+  const d = fitCanvas(c), ctx = c.getContext('2d'), w = c.width, h = c.height, cx = w / 2, cy = h / 2, R = Math.min(w, h) * .3;
+  ctx.clearRect(0, 0, w, h);
+  ctx.globalCompositeOperation = 'lighter';
+  const e = energy;
+  // halo
+  let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.75);
+  g.addColorStop(0, `rgba(54,228,255,${.18 + e * .3})`); g.addColorStop(.4, `rgba(139,92,255,${.10 + e * .15})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.75, 0, 7); ctx.fill();
+  // rings
+  const rings = [[1.05, .32, .35, '54,228,255'], [1.18, .55, -.22, '139,92,255'], [1.32, .2, .14, '255,79,216'], [.92, .8, -.5, '54,228,255']];
+  rings.forEach(([rr, tilt, sp, col], i) => {
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * sp * spin * .6 + i); ctx.scale(1, tilt + Math.sin(t * .4 + i) * .08);
+    ctx.strokeStyle = `rgba(${col},${.35 + e * .4})`; ctx.lineWidth = (1 + e * 1.5) * d;
+    ctx.setLineDash(i % 2 ? [3 * d, 9 * d] : [40 * d, 14 * d, 4 * d, 14 * d]);
+    ctx.beginPath(); ctx.arc(0, 0, R * rr * (1 + e * .06), 0, 7); ctx.stroke();
+    ctx.restore();
+  });
+  ctx.setLineDash([]);
+  // morphing plasma core
+  for (let layer = 0; layer < 3; layer++) {
+    const amp = .05 + e * .16 + layer * .02, base = R * (.62 - layer * .12) * (1 + speakPulse * .12);
+    ctx.beginPath();
+    for (let a = 0; a <= 6.30; a += .07) {
+      const n = Math.sin(a * 3 + t * (1.2 + layer) * spin) * .5 + Math.sin(a * 5 - t * 1.7 * spin + layer) * .3 + Math.sin(a * 2 + t * .7) * .2;
+      const r = base * (1 + n * amp);
+      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      a === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    const cg = ctx.createRadialGradient(cx - R * .15, cy - R * .2, 0, cx, cy, base * 1.2);
+    const cols = [['255,255,255', '54,228,255', '139,92,255'], ['200,250,255', '54,228,255', '255,79,216'], ['255,255,255', '139,92,255', '54,228,255']][layer];
+    cg.addColorStop(0, `rgba(${cols[0]},${.55 - layer * .1})`); cg.addColorStop(.45, `rgba(${cols[1]},${.32})`); cg.addColorStop(1, `rgba(${cols[2]},.04)`);
+    ctx.fillStyle = cg; ctx.fill();
+  }
+  // orbiting particles
+  for (const p of orbParticles) {
+    p.a += p.s * .01 * spin * (1 + e * 2);
+    const rr = R * p.r * (1 + e * .15), x = cx + Math.cos(p.a) * rr, y = cy + Math.sin(p.a) * rr * (.45 + p.z * .5);
+    ctx.fillStyle = `rgba(${p.z > .5 ? '54,228,255' : '200,170,255'},${.4 + e * .5})`;
+    ctx.beginPath(); ctx.arc(x, y, (1 + p.z * 1.6) * d, 0, 7); ctx.fill();
+  }
+  // equalizer ring when listening / speaking
+  if (state === 'listening' || state === 'speaking') {
+    const bars = 72, lvl = state === 'listening' ? micLevel : speakPulse;
+    for (let i = 0; i < bars; i++) {
+      const a = i / bars * 6.283, v = (Math.sin(i * .9 + t * 9) * .5 + .5) * lvl;
+      const r1 = R * 1.42, r2 = r1 + R * (.04 + v * .35);
+      ctx.strokeStyle = state === 'listening' ? `rgba(54,228,255,${.3 + v})` : `rgba(255,79,216,${.3 + v})`;
+      ctx.lineWidth = 2 * d; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); ctx.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2); ctx.stroke();
+    }
+  }
+  ctx.globalCompositeOperation = 'source-over';
+}
+function loop(ts) {
+  const t = ts / 1000;
+  const target = {idle: .15, thinking: .65, listening: .35 + micLevel * .6, speaking: .45 + speakPulse * .5, error: .1}[state] ?? .15;
+  energy += (target - energy) * .06;
+  spin += ((state === 'thinking' ? 3.2 : 1) - spin) * .04;
+  if (state === 'speaking') speakPulse += ((Math.random() * .9 + .1) - speakPulse) * .25; else speakPulse *= .9;
+  drawBg();
+  if (!el.welcome.hidden) drawCore($('#core'), t);
+  if ($('#talk').classList.contains('on')) drawCore($('#talkCore'), t);
+  requestAnimationFrame(loop);
+}
+
+/* =========================================================
+   Markdown (small, safe)
+   ========================================================= */
+function inline(s) {
+  return s
+    .replace(/`([^`]+)`/g, (m, c) => `<code>${c}</code>`)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+}
+function md(src) {
+  const blocks = [];
+  src = String(src).replace(/```([\w+-]*)[^\n]*\n?([\s\S]*?)(```|$)/g, (m, lang, code) => { blocks.push({lang, code: code.replace(/\n$/, '')}); return `\n\u0000${blocks.length - 1}\u0000\n`; });
+  const lines = esc(src).split('\n'), out = [];
+  let para = [], list = null;
+  const flushP = () => { if (para.length) { out.push(`<p>${inline(para.join('<br>'))}</p>`); para = []; } };
+  const flushL = () => { if (list) { out.push(`<${list.type}>${list.items.map(i => `<li>${inline(i)}</li>`).join('')}</${list.type}>`); list = null; } };
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    let m;
+    if ((m = l.match(/^\u0000(\d+)\u0000$/))) {
+      flushP(); flushL(); const b = blocks[+m[1]];
+      out.push(`<pre><div class="ch"><span>${esc(b.lang || 'code')}</span><button data-copy>Copy</button></div><code>${esc(b.code)}</code></pre>`);
+    } else if (/^\s*$/.test(l)) { flushP(); flushL(); }
+    else if ((m = l.match(/^(#{1,4})\s+(.*)/))) { flushP(); flushL(); const n = Math.min(m[1].length, 3); out.push(`<h${n}>${inline(m[2])}</h${n}>`); }
+    else if (/^\s*([-*_])\s*\1\s*\1[\s\1]*$/.test(l)) { flushP(); flushL(); out.push('<hr>'); }
+    else if ((m = l.match(/^&gt;\s?(.*)/))) { flushP(); flushL(); out.push(`<blockquote>${inline(m[1])}</blockquote>`); }
+    else if (/^\s*\|.*\|\s*$/.test(l) && i + 1 < lines.length && /^\s*\|?\s*:?-{2,}/.test(lines[i + 1])) {
+      flushP(); flushL();
+      const cells = r => r.trim().replace(/^\||\|$/g, '').split('|').map(c => inline(c.trim()));
+      let html = '<table><thead><tr>' + cells(l).map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+      i += 2;
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { html += '<tr>' + cells(lines[i]).map(c => `<td>${c}</td>`).join('') + '</tr>'; i++; }
+      i--; out.push(html + '</tbody></table>');
+    }
+    else if ((m = l.match(/^\s*(?:[-*•]|(\d+)[.)])\s+(.*)/))) {
+      flushP(); const type = m[1] ? 'ol' : 'ul';
+      if (!list || list.type !== type) { flushL(); list = {type, items: []}; }
+      list.items.push(m[2]);
+    }
+    else if (list && /^\s{2,}\S/.test(l)) { list.items[list.items.length - 1] += ' ' + l.trim(); }
+    else { flushL(); para.push(l); }
+  }
+  flushP(); flushL();
+  return out.join('');
+}
+const cleanReply = s => String(s || '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^[\s\S]*?<\/think>/i, '').trim();
+
+/* =========================================================
+   Chats & sidebar
+   ========================================================= */
+function dayLabel(ts) {
+  const d = new Date(ts), now = new Date();
+  const start = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((start(now) - start(d)) / 864e5);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  if (diff < 7) return 'Previous 7 days';
+  if (diff < 30) return 'Previous 30 days';
+  return d.toLocaleDateString(undefined, {month: 'long', year: 'numeric'});
+}
+const fmtTime = ts => new Date(ts).toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'});
+const fmtFull = ts => new Date(ts).toLocaleString(undefined, {weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
+
+function renderSidebar() {
+  const q = $('#searchInput').value.trim().toLowerCase();
+  const list = chats.filter(c => !q || c.title.toLowerCase().includes(q) || c.messages.some(m => typeof m.content === 'string' && m.content.toLowerCase().includes(q)))
+    .sort((a, b) => b.updated - a.updated);
+  let html = '', last = '';
+  for (const c of list) {
+    const lab = dayLabel(c.updated);
+    if (lab !== last) { html += `<div class="group">${esc(lab)}</div>`; last = lab; }
+    html += `<button class="citem ${current && c.id === current.id ? 'active' : ''}" data-id="${c.id}"><span class="t">${esc(c.title)}</span><span class="d">${esc(fmtFull(c.updated))} · ${c.messages.length} msgs</span><span class="del" data-del="${c.id}" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></span></button>`;
+  }
+  el.list.innerHTML = html || `<div class="empty">${q ? 'No chats found' : 'Your chats will appear here'}</div>`;
+}
+function newChat() {
+  current = null; pendingFiles = []; renderPending();
+  renderChat(); el.input.focus(); closeSidebar();
+}
+function openChat(id) {
+  current = chats.find(c => c.id === id) || null;
+  renderChat(); closeSidebar();
+}
+function deleteChat(id) {
+  if (!confirm('Delete this chat?')) return;
+  chats = chats.filter(c => c.id !== id); saveChats();
+  if (current && current.id === id) current = null;
+  renderChat();
+}
+function greet() {
+  const h = new Date().getHours();
+  const part = h < 5 ? 'Up late' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  $('#greet').innerHTML = settings.name ? `${part}, <span>${esc(settings.name)}</span>` : `Hello, <span>I'm Murad AI</span>`;
+}
+function renderChat() {
+  el.messages.innerHTML = '';
+  const has = current && current.messages.length;
+  el.welcome.hidden = !!has;
+  if (!has) greet();
+  if (has) current.messages.forEach(m => el.messages.appendChild(msgEl(m)));
+  renderSidebar(); scrollEnd(true);
+}
+function scrollEnd(force) {
+  const t = el.thread;
+  if (force || t.scrollHeight - t.scrollTop - t.clientHeight < 220) t.scrollTop = t.scrollHeight;
+}
+const ICON = {
+  copy: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
+  speak: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
+  retry: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>'
+};
+function fileCard(f, removable, idx) {
+  if (f.kind === 'image' && f.images && f.images[0])
+    return `<div class="fcard img"><img src="${f.images[0]}" alt="${esc(f.name)}">${removable ? `<button class="x" data-rm="${idx}">✕</button>` : ''}</div>`;
+  const ext = (f.name.split('.').pop() || 'file').slice(0, 4).toUpperCase();
+  const info = f.loading ? 'Reading…' : [f.pages ? f.pages + ' pages' : '', f.scanned ? 'scanned' : '', f.size ? fmtSize(f.size) : ''].filter(Boolean).join(' · ');
+  return `<div class="fcard ${f.loading ? 'loading' : ''}"><div class="fi">${esc(ext)}</div><div style="min-width:0"><div class="fn">${esc(f.name)}</div><div class="fs">${esc(info)}</div></div>${removable ? `<button class="x" data-rm="${idx}">✕</button>` : ''}</div>`;
+}
+const fmtSize = b => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+
+function msgEl(m) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + (m.role === 'user' ? 'user' : m.error ? 'ai err' : 'ai');
+  const files = m.files && m.files.length ? `<div class="files">${m.files.map(f => fileCard(f)).join('')}</div>` : '';
+  const content = m.role === 'user' ? esc(m.content) : m.error ? esc(m.content) : md(m.content);
+  const actions = m.role === 'user' ? '' : m.error
+    ? `<button data-act="retry" title="Try again">${ICON.retry}</button>`
+    : `<button data-act="copy" title="Copy">${ICON.copy}</button><button data-act="speak" title="Read aloud">${ICON.speak}</button>`;
+  const mem = m.memory && m.memory.length ? `<div class="memchip">◆ Saved to memory: ${esc(m.memory.join('; '))}</div>` : '';
+  wrap.innerHTML = `${m.role === 'user' ? '' : '<div class="avatar"></div>'}<div class="body">${files}${content ? `<div class="bubble">${content}</div>` : ''}${mem}<div class="meta"><span title="${esc(new Date(m.ts).toLocaleString())}">${esc(fmtTime(m.ts))}</span>${m.model ? `<span>· ${esc(m.model)}</span>` : ''}${actions}</div></div>`;
+  wrap._msg = m;
+  return wrap;
+}
+
+/* =========================================================
+   Files: PDF / DOCX / text / images
+   ========================================================= */
+const MAX_TEXT = 90000;
+const loadScript = (() => { const c = {}; return src => c[src] || (c[src] = new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s); })); })();
+let pdfLibP = null;
+function pdfjs() {
+  // bundled copy first (lib/), CDN as a backup
+  return pdfLibP || (pdfLibP = (async () => {
+    try {
+      const lib = await import('./lib/pdf.min.js');
+      lib.GlobalWorkerOptions.workerSrc = new URL('lib/pdf.worker.min.js', location.href).href;
+      return lib;
+    } catch (e) {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      return window.pdfjsLib;
+    }
+  })());
+}
+function imgToDataURL(src, max = 1280, q = .82) {
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => {
+      const s = Math.min(1, max / Math.max(im.width, im.height));
+      const c = document.createElement('canvas'); c.width = Math.round(im.width * s); c.height = Math.round(im.height * s);
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+      res(c.toDataURL('image/jpeg', q));
+    };
+    im.onerror = () => rej(new Error('Could not read image'));
+    im.src = src;
+  });
+}
+const readAs = (file, how) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r[how](file); });
+
+async function processFile(file) {
+  const name = file.name || 'pasted-image.png', lower = name.toLowerCase();
+  const f = {id: uid(), name, size: file.size};
+  if (file.type.startsWith('image/')) {
+    f.kind = 'image'; f.images = [await imgToDataURL(await readAs(file, 'readAsDataURL'))];
+  } else if (lower.endsWith('.pdf') || file.type === 'application/pdf') {
+    f.kind = 'pdf';
+    const lib = await pdfjs();
+    const pdf = await lib.getDocument({data: new Uint8Array(await readAs(file, 'readAsArrayBuffer'))}).promise;
+    f.pages = pdf.numPages;
+    let text = '';
+    for (let p = 1; p <= pdf.numPages && text.length < MAX_TEXT; p++) {
+      const pg = await pdf.getPage(p), tc = await pg.getTextContent();
+      let line = '', out = '', lastY = null;
+      for (const it of tc.items) { const y = it.transform ? it.transform[5] : 0; if (lastY !== null && Math.abs(y - lastY) > 2) { out += line.trimEnd() + '\n'; line = ''; } line += it.str + (it.hasEOL ? '\n' : ''); lastY = y; }
+      out += line;
+      text += `\n--- Page ${p} ---\n` + out.replace(/\n{3,}/g, '\n\n');
+    }
+    const meaningful = text.replace(/--- Page \d+ ---|\s/g, '').length;
+    if (meaningful < 40 * Math.min(pdf.numPages, 3)) {
+      // scanned PDF: render first pages as images for a vision model
+      f.scanned = true; f.images = [];
+      for (let p = 1; p <= Math.min(pdf.numPages, 4); p++) {
+        const pg = await pdf.getPage(p), vp = pg.getViewport({scale: 1.6});
+        const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+        await pg.render({canvas: c, canvasContext: c.getContext('2d'), viewport: vp}).promise;
+        f.images.push(await imgToDataURL(c.toDataURL('image/png'), 1400, .8));
+      }
+    } else f.text = text;
+  } else if (lower.endsWith('.docx')) {
+    f.kind = 'doc';
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+    const r = await window.mammoth.extractRawText({arrayBuffer: await readAs(file, 'readAsArrayBuffer')});
+    f.text = r.value;
+  } else if (lower.endsWith('.doc')) {
+    throw new Error('Old .doc files are not supported — save it as .docx or PDF.');
+  } else {
+    f.kind = 'text';
+    if (file.size > 5 * 1048576) throw new Error('Text file is too large (max 5 MB).');
+    f.text = await readAs(file, 'readAsText');
+  }
+  if (f.text && f.text.length > MAX_TEXT) { f.text = f.text.slice(0, MAX_TEXT); f.truncated = true; }
+  return f;
+}
+async function addFiles(list) {
+  for (const file of list) {
+    if (pendingFiles.length >= 6) { toast('Max 6 files per message'); break; }
+    if (file.size > 40 * 1048576) { toast(`${file.name} is too large (max 40 MB)`); continue; }
+    const ph = {id: uid(), name: file.name || 'image', size: file.size, loading: true};
+    pendingFiles.push(ph); renderPending();
+    try {
+      const f = await processFile(file);
+      Object.assign(ph, f, {loading: false, id: ph.id});
+    } catch (e) {
+      pendingFiles = pendingFiles.filter(x => x !== ph);
+      toast(e.message || 'Could not read that file', 4000);
+    }
+    renderPending();
+  }
+}
+function renderPending() {
+  el.pending.innerHTML = pendingFiles.map((f, i) => fileCard(f, true, i)).join('');
+  el.pending.classList.toggle('on', pendingFiles.length > 0);
+  updateSend();
+}
+
+/* =========================================================
+   AI calls
+   ========================================================= */
+const PROVIDERS = {
+  groq: {url: 'https://api.groq.com/openai/v1/chat/completions', model: 'openai/gpt-oss-120b', vision: 'meta-llama/llama-4-scout-17b-16e-instruct'},
+  gemini: {url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', model: 'gemini-2.5-flash', vision: 'gemini-2.5-flash'},
+  openrouter: {url: 'https://openrouter.ai/api/v1/chat/completions', model: 'openrouter/free', vision: 'openrouter/free'}
+};
+function systemPrompt(voice) {
+  const now = new Date(), tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  let s = `You are Murad AI, a friendly, futuristic and highly capable personal AI assistant created by Murad Alam.
+Current date and time: ${now.toLocaleString('en-GB', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'})} (${tz}).`;
+  if (settings.name) s += `\nThe user's name is ${settings.name}.`;
+  if (memories.length) s += `\n\nThings you remember about the user (use them naturally when relevant):\n` + memories.map(m => `- ${m.text} (saved ${new Date(m.ts).toLocaleDateString('en-GB')})`).join('\n');
+  if (settings.persona) s += `\n\nUser's instructions for you: ${settings.persona}`;
+  s += `\n\nGuidelines:
+- Be helpful, accurate, warm and clear. Use Markdown (headings, lists, tables, code blocks) when it helps.
+- If the user attaches files, their text appears inside [Attached file] blocks. Read them carefully, refer to page numbers when useful, and say if something is not in the file.
+- If you are not sure about something or it may have changed recently, say so honestly.
+- MEMORY: When the user shares a lasting personal fact (name, studies, job, location, goals, preferences, important dates) or asks you to remember something, add at the very end of your reply one line per fact: <remember>short fact in third person</remember>. Do not do this for small talk or one-time things. Never mention these tags.`;
+  if (voice) s += `\n- VOICE MODE: your answer will be spoken aloud. Reply in short, natural spoken sentences (usually 1–4), no Markdown, no lists, no emojis, no URLs. Reply in the language the user speaks.`;
+  return s;
+}
+function toApiContent(m, includeImages) {
+  if (m.role !== 'user' || !m.files || !m.files.length) return m.content;
+  let text = m.content || '';
+  const images = [];
+  for (const f of m.files) {
+    if (f.text) text += `\n\n[Attached file: ${f.name}${f.pages ? `, ${f.pages} pages` : ''}${f.truncated ? ', truncated' : ''}]\n"""\n${f.text}\n"""`;
+    if (f.images) {
+      if (includeImages) images.push(...f.images);
+      else text += `\n\n[Earlier attached ${f.kind === 'image' ? 'image' : 'scanned document'}: ${f.name} — no longer visible]`;
+    }
+  }
+  if (!text.trim()) text = 'Please look at the attached file.';
+  if (!images.length) return text;
+  return [{type: 'text', text}, ...images.map(url => ({type: 'image_url', image_url: {url}}))];
+}
+function buildMessages(voice) {
+  const hist = current.messages.filter(m => !m.error).slice(-24);
+  // only send images from the latest 2 user messages that have images
+  const withImg = hist.filter(m => m.role === 'user' && m.files && m.files.some(f => f.images)).slice(-2);
+  const msgs = hist.map(m => ({role: m.role === 'user' ? 'user' : 'assistant', content: toApiContent(m, withImg.includes(m))}));
+  return [{role: 'system', content: systemPrompt(voice)}, ...msgs];
+}
+const hasImages = msgs => msgs.some(m => Array.isArray(m.content));
+
+async function callAI(messages) {
+  abortCtrl = new AbortController();
+  const signal = abortCtrl.signal, vision = hasImages(messages);
+  if (settings.mode === 'server') {
+    let r;
+    try {
+      r = await fetch(settings.endpoint || 'api.php', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({messages, passcode: settings.passcode, vision}), signal});
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      throw new Error('Could not reach the server. If you opened this file directly on your computer, open Settings and use Direct mode, or upload it to your website.');
+    }
+    const txt = await r.text(); let j;
+    try { j = JSON.parse(txt); } catch { throw new Error(r.status === 404 ? 'api.php was not found next to index.html. Upload it, or switch to Direct mode in Settings.' : `The server sent an unexpected reply (HTTP ${r.status}). Check that PHP is enabled.`); }
+    if (!r.ok || j.error) throw new Error(j.error || `Server error ${r.status}`);
+    return {text: j.reply, model: j.model};
+  }
+  const p = PROVIDERS[settings.provider] || PROVIDERS.groq;
+  if (!settings.apiKey) throw new Error('Add your free API key in Settings → Connection (Direct mode).');
+  const model = (vision ? null : settings.model) || (vision ? p.vision : p.model);
+  const headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + settings.apiKey};
+  if (settings.provider === 'openrouter') { headers['HTTP-Referer'] = location.origin; headers['X-Title'] = 'Murad AI'; }
+  const r = await fetch(p.url, {method: 'POST', headers, body: JSON.stringify({model, messages, temperature: .7, max_tokens: 4096}), signal});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const msg = (j.error && (j.error.message || j[0]?.error?.message)) || (Array.isArray(j) && j[0]?.error?.message) || `HTTP ${r.status}`;
+    if (r.status === 429) throw new Error('Free limit reached for now. Wait a minute and try again. (' + msg + ')');
+    if (r.status === 401 || r.status === 403) throw new Error('The API key was rejected. Check it in Settings. (' + msg + ')');
+    throw new Error(msg);
+  }
+  return {text: j.choices?.[0]?.message?.content || '', model};
+}
+
+function extractMemories(text) {
+  const found = [];
+  const clean = text.replace(/<remember>([\s\S]*?)<\/remember>/gi, (m, f) => { f = f.trim(); if (f) found.push(f); return ''; }).trim();
+  const added = [];
+  for (const f of found) {
+    if (!memories.some(m => m.text.toLowerCase() === f.toLowerCase())) { memories.push({id: uid(), text: f, ts: Date.now()}); added.push(f); }
+  }
+  if (added.length) saveMem();
+  return {clean, added};
+}
+
+async function send(text, opts = {}) {
+  text = (text ?? el.input.value).trim();
+  if (busy || pendingFiles.some(f => f.loading)) return;
+  if (!text && !pendingFiles.length) return;
+  if (!current) {
+    const title = (text || pendingFiles[0]?.name || 'New chat').replace(/\s+/g, ' ').slice(0, 48);
+    current = {id: uid(), title, created: Date.now(), updated: Date.now(), messages: []};
+    chats.push(current);
+  }
+  const files = pendingFiles.filter(f => !f.loading).map(({loading, id, ...f}) => f);
+  const um = {role: 'user', content: text, ts: Date.now()};
+  if (files.length) um.files = files;
+  current.messages.push(um); current.updated = Date.now();
+  pendingFiles = []; renderPending();
+  if (!opts.fromVoice) { el.input.value = ''; autosize(); }
+  el.welcome.hidden = true;
+  el.messages.appendChild(msgEl(um)); scrollEnd(true); renderSidebar(); saveChats();
+  return respond(opts);
+}
+
+async function respond(opts = {}) {
+  busy = true; updateSend(); setState('thinking');
+  const holder = document.createElement('div'); holder.className = 'msg ai busy';
+  holder.innerHTML = '<div class="avatar"></div><div class="body"><div class="thinking"><span></span><span></span><span></span></div></div>';
+  el.messages.appendChild(holder); scrollEnd(true);
+  let reply;
+  try {
+    const r = await callAI(buildMessages(!!opts.fromVoice));
+    const {clean, added} = extractMemories(cleanReply(r.text));
+    reply = {role: 'assistant', content: clean || '(empty reply)', ts: Date.now(), model: r.model};
+    if (added.length) reply.memory = added;
+    current.messages.push(reply); current.updated = Date.now(); saveChats();
+    await typeOut(holder, reply);
+  } catch (e) {
+    holder.remove();
+    const aborted = e.name === 'AbortError';
+    const em = {role: 'assistant', error: true, content: aborted ? 'Stopped.' : (e.message || 'Something went wrong.'), ts: Date.now()};
+    if (!aborted) { current.messages.push(em); saveChats(); }
+    el.messages.appendChild(msgEl(em)); scrollEnd(true);
+    setState(aborted ? 'idle' : 'error', aborted ? null : 'Error');
+    if (!aborted) setTimeout(() => state === 'error' && setState('idle'), 4000);
+    busy = false; updateSend(); renderSidebar();
+    if (opts.fromVoice) talkAfterReply(null, em.content);
+    return;
+  }
+  busy = false; updateSend(); setState('idle'); renderSidebar();
+  if (opts.fromVoice) talkAfterReply(reply.content);
+  else if (settings.autoSpeak) speak(reply.content);
+}
+
+async function typeOut(holder, m) {
+  const node = msgEl(m); node.classList.add('busy');
+  holder.replaceWith(node);
+  const bubble = node.querySelector('.bubble'), full = m.content;
+  if (!bubble || matchMedia('(prefers-reduced-motion: reduce)').matches) { node.classList.remove('busy'); return; }
+  const meta = node.querySelector('.meta'), memc = node.querySelector('.memchip');
+  meta.style.visibility = 'hidden'; if (memc) memc.hidden = true;
+  const steps = Math.min(90, Math.max(12, full.length / 18)), chunk = Math.ceil(full.length / steps);
+  for (let i = chunk; i < full.length; i += chunk) {
+    bubble.innerHTML = md(full.slice(0, i)) + '<span class="cursor"></span>';
+    scrollEnd(); await sleep(16);
+  }
+  bubble.innerHTML = md(full);
+  meta.style.visibility = ''; if (memc) memc.hidden = false;
+  node.classList.remove('busy'); scrollEnd();
+}
+
+/* =========================================================
+   Voice: speech recognition + text to speech
+   ========================================================= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, dictating = false;
+function speechText(t) {
+  return String(t).replace(/```[\s\S]*?```/g, ' (code shown on screen) ').replace(/`([^`]+)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/https?:\/\/\S+/g, 'link').replace(/[#*_>|~]/g, '')
+    .replace(/^\s*[-•]\s+/gm, '').replace(/\n{2,}/g, '. ').replace(/\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
+function pickVoice() {
+  const vs = speechSynthesis.getVoices();
+  return vs.find(v => v.name === settings.voice) || vs.find(v => v.lang === settings.lang && /natural|neural|google|online/i.test(v.name)) || vs.find(v => v.lang === settings.lang) || vs.find(v => v.lang.startsWith(settings.lang.slice(0, 2))) || null;
+}
+let speakToken = 0;
+function speak(text, onDone) {
+  if (!('speechSynthesis' in window)) { onDone && onDone(); return; }
+  speechSynthesis.cancel();
+  const token = ++speakToken;
+  const parts = speechText(text).match(/[^.!?。]+[.!?。]*|.+$/g) || [];
+  const chunks = []; let buf = '';
+  for (const p of parts) { if ((buf + p).length > 220 && buf) { chunks.push(buf); buf = ''; } buf += p; }
+  if (buf.trim()) chunks.push(buf);
+  if (!chunks.length) { onDone && onDone(); return; }
+  setState('speaking');
+  const v = pickVoice(); let i = 0;
+  const next = () => {
+    if (token !== speakToken) return;
+    if (i >= chunks.length) { if (state === 'speaking') setState('idle'); onDone && onDone(); return; }
+    const u = new SpeechSynthesisUtterance(chunks[i++].trim());
+    u.lang = v ? v.lang : settings.lang; if (v) u.voice = v; u.rate = +settings.rate || 1;
+    u.onend = next; u.onerror = next;
+    speechSynthesis.speak(u);
+  };
+  next();
+}
+function stopSpeaking() { speakToken++; if ('speechSynthesis' in window) speechSynthesis.cancel(); if (state === 'speaking') setState('idle'); }
+
+let micStream = null, micRAF = null;
+async function startMicMeter() {
+  try {
+    if (micStream) return;
+    micStream = await navigator.mediaDevices.getUserMedia({audio: true});
+    const ac = new (window.AudioContext || window.webkitAudioContext)(), an = ac.createAnalyser();
+    ac.createMediaStreamSource(micStream).connect(an); an.fftSize = 256;
+    const data = new Uint8Array(an.frequencyBinCount);
+    const tick = () => { an.getByteFrequencyData(data); let s = 0; for (const x of data) s += x; micLevel = Math.min(1, s / data.length / 70); micRAF = requestAnimationFrame(tick); };
+    tick(); micStream._ac = ac;
+  } catch { /* meter is optional */ }
+}
+function stopMicMeter() { cancelAnimationFrame(micRAF); if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream._ac && micStream._ac.close(); micStream = null; } micLevel = 0; }
+
+function listen({onInterim, onFinal, onEnd}) {
+  if (!SR) { toast('Voice input needs Chrome, Edge or Safari.', 4000); onEnd && onEnd('unsupported'); return null; }
+  const r = new SR(); r.lang = settings.lang; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+  let finalText = '', err = null;
+  r.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalText += t; else interim += t;
+    }
+    onInterim && onInterim(finalText + interim);
+  };
+  r.onerror = e => { err = e.error; };
+  r.onend = () => { if (finalText.trim()) onFinal && onFinal(finalText.trim()); onEnd && onEnd(err, finalText.trim()); };
+  try { r.start(); } catch { onEnd && onEnd('busy'); return null; }
+  return r;
+}
+
+/* dictation into the text box */
+el.mic.onclick = () => {
+  if (dictating && rec) { rec.stop(); return; }
+  stopSpeaking();
+  const before = el.input.value ? el.input.value.trimEnd() + ' ' : '';
+  rec = listen({
+    onInterim: t => { el.input.value = before + t; autosize(); updateSend(); },
+    onEnd: err => {
+      dictating = false; el.mic.classList.remove('rec'); setState('idle');
+      if (err === 'not-allowed') toast('Microphone permission was blocked. Allow it in the browser settings.', 4500);
+      else if (err === 'network') toast('Voice recognition needs an internet connection.', 4000);
+      el.input.focus();
+    }
+  });
+  if (rec) { dictating = true; el.mic.classList.add('rec'); setState('listening'); }
+};
+
+/* talk mode — continuous voice conversation */
+let talkOn = false, talkPaused = false, talkRec = null, talkMisses = 0;
+const talkUI = (s, html) => { $('#talkState').textContent = s; if (html !== undefined) $('#talkText').innerHTML = html; };
+function openTalk() {
+  if (!SR) { toast('Talk mode needs Chrome, Edge or Safari (with microphone).', 4500); return; }
+  talkOn = true; talkPaused = false; talkMisses = 0;
+  $('#talk').classList.add('on'); $('#talkMute span').textContent = 'Pause';
+  $('#hudLang').textContent = 'LANG ' + settings.lang.toUpperCase();
+  startMicMeter();
+  talkListen();
+}
+function closeTalk() {
+  talkOn = false; if (talkRec) try { talkRec.abort(); } catch {}
+  talkRec = null; stopSpeaking(); stopMicMeter();
+  if (abortCtrl && busy) abortCtrl.abort();
+  $('#talk').classList.remove('on'); setState('idle');
+}
+function talkListen() {
+  if (!talkOn || talkPaused) return;
+  stopSpeaking(); setState('listening'); talkUI('Listening', '<span class="you">Go ahead, I\'m listening…</span>');
+  talkRec = listen({
+    onInterim: t => talkUI('Listening', `<span class="you">${esc(t)}</span>`),
+    onFinal: t => {
+      talkMisses = 0; talkUI('Thinking', `<span class="you">“${esc(t)}”</span>`);
+      send(t, {fromVoice: true});
+    },
+    onEnd: (err, txt) => {
+      talkRec = null;
+      if (!talkOn || txt) return;
+      if (err === 'not-allowed' || err === 'service-not-allowed') { talkUI('Mic blocked', 'Allow microphone access for this site, then tap the core.'); setState('error'); return; }
+      if (talkPaused) return;
+      if (++talkMisses >= 3) { setState('idle'); talkUI('Standby', 'Tap the core when you want to talk.'); return; }
+      setTimeout(talkListen, 250);
+    }
+  });
+}
+function talkAfterReply(text, errText) {
+  if (!talkOn) return;
+  if (errText) { talkUI('Error', esc(errText)); speak(errText, () => talkOn && setTimeout(talkListen, 300)); return; }
+  talkUI('Speaking', esc(speechText(text)).slice(0, 600));
+  speak(text, () => { if (talkOn && !talkPaused) setTimeout(talkListen, 250); });
+}
+$('#talkBtn').onclick = openTalk;
+$('#talkEnd').onclick = closeTalk;
+$('#talkCore').onclick = () => {
+  if (state === 'speaking') { stopSpeaking(); talkPaused = false; talkMisses = 0; talkListen(); return; }
+  if (state === 'listening' && talkRec) { talkRec.stop(); return; }
+  if (!busy) { talkPaused = false; talkMisses = 0; $('#talkMute span').textContent = 'Pause'; talkListen(); }
+};
+$('#talkMute').onclick = () => {
+  talkPaused = !talkPaused;
+  $('#talkMute span').textContent = talkPaused ? 'Resume' : 'Pause';
+  if (talkPaused) { if (talkRec) try { talkRec.abort(); } catch {} stopSpeaking(); setState('idle'); talkUI('Paused', 'Tap Resume or the core to continue.'); }
+  else { talkMisses = 0; talkListen(); }
+};
+
+/* =========================================================
+   Composer & events
+   ========================================================= */
+function autosize() { el.input.style.height = 'auto'; el.input.style.height = Math.min(el.input.scrollHeight, 200) + 'px'; }
+function updateSend() {
+  const STOP = '<svg width="14" height="14" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>';
+  const SEND = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+  if (busy) { el.send.disabled = false; el.send.classList.add('stop'); el.send.innerHTML = STOP; el.send.title = 'Stop'; return; }
+  el.send.classList.remove('stop'); el.send.innerHTML = SEND; el.send.title = 'Send';
+  el.send.disabled = !(el.input.value.trim() || pendingFiles.length) || pendingFiles.some(f => f.loading);
+}
+el.input.addEventListener('input', () => { autosize(); updateSend(); });
+el.input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
+el.input.addEventListener('paste', e => {
+  const imgs = [...(e.clipboardData?.files || [])].filter(f => f.type.startsWith('image/'));
+  if (imgs.length) { e.preventDefault(); addFiles(imgs); }
+});
+el.send.onclick = () => { if (busy) { abortCtrl && abortCtrl.abort(); } else send(); };
+$('#attachBtn').onclick = () => $('#fileInput').click();
+$('#fileInput').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
+el.pending.onclick = e => { const b = e.target.closest('[data-rm]'); if (b) { pendingFiles.splice(+b.dataset.rm, 1); renderPending(); } };
+let dragDepth = 0;
+addEventListener('dragenter', e => { if (e.dataTransfer?.types?.includes('Files')) { dragDepth++; $('#dropHint').classList.add('on'); } });
+addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('#dropHint').classList.remove('on'); } });
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; $('#dropHint').classList.remove('on'); if (e.dataTransfer?.files?.length) addFiles([...e.dataTransfer.files]); });
+
+document.querySelectorAll('.chip').forEach(c => c.onclick = () => send(c.dataset.q));
+$('#newChatBtn').onclick = newChat;
+$('#searchInput').oninput = renderSidebar;
+el.list.onclick = e => {
+  const d = e.target.closest('[data-del]'); if (d) { e.stopPropagation(); deleteChat(d.dataset.del); return; }
+  const c = e.target.closest('.citem'); if (c) openChat(c.dataset.id);
+};
+el.messages.onclick = async e => {
+  const cp = e.target.closest('[data-copy]');
+  if (cp) { await navigator.clipboard.writeText(cp.closest('pre').querySelector('code').textContent).catch(() => {}); cp.textContent = 'Copied'; setTimeout(() => cp.textContent = 'Copy', 1400); return; }
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const m = b.closest('.msg')._msg;
+  if (b.dataset.act === 'copy') { await navigator.clipboard.writeText(m.content).catch(() => {}); toast('Copied'); }
+  if (b.dataset.act === 'speak') { state === 'speaking' ? stopSpeaking() : speak(m.content); }
+  if (b.dataset.act === 'retry' && !busy) {
+    current.messages = current.messages.filter(x => x !== m); saveChats();
+    b.closest('.msg').remove(); respond();
+  }
+};
+const openSidebar = () => { el.sidebar.classList.add('open'); el.backdrop.classList.add('on'); };
+const closeSidebar = () => { el.sidebar.classList.remove('open'); el.backdrop.classList.remove('on'); };
+$('#menuBtn').onclick = openSidebar; el.backdrop.onclick = closeSidebar;
+addEventListener('keydown', e => {
+  if (e.key === 'Escape' && talkOn) closeTalk();
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); newChat(); }
+});
+setInterval(() => { $('#hudClock').textContent = new Date().toLocaleTimeString(); }, 1000);
+
+/* =========================================================
+   Settings & memory dialogs
+   ========================================================= */
+document.querySelectorAll('dialog [data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
+document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+function fillVoices() {
+  if (!('speechSynthesis' in window)) return;
+  const lang = $('#sLang').value, vs = speechSynthesis.getVoices();
+  const list = vs.filter(v => v.lang.replace('_', '-').startsWith(lang.slice(0, 2)));
+  $('#sVoice').innerHTML = '<option value="">Automatic</option>' + list.map(v => `<option ${v.name === settings.voice ? 'selected' : ''}>${esc(v.name)}</option>`).join('');
+}
+if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = fillVoices;
+function toggleModeFields() { const s = $('#sMode').value === 'server'; $('#serverFields').hidden = !s; $('#directFields').hidden = s; }
+$('#sMode').onchange = toggleModeFields;
+$('#sLang').onchange = fillVoices;
+$('#sRate').oninput = () => $('#rateVal').textContent = '(' + (+$('#sRate').value).toFixed(2) + '×)';
+$('#settingsBtn').onclick = () => {
+  $('#sName').value = settings.name; $('#sPersona').value = settings.persona;
+  $('#sMode').value = settings.mode; $('#sEndpoint').value = settings.endpoint; $('#sPass').value = settings.passcode;
+  $('#sProvider').value = settings.provider; $('#sKey').value = settings.apiKey; $('#sModel').value = settings.model;
+  $('#sLang').value = settings.lang; $('#sRate').value = settings.rate; $('#sRate').oninput(); $('#sAuto').checked = settings.autoSpeak;
+  $('#testOut').textContent = '';
+  toggleModeFields(); fillVoices(); $('#settingsDlg').showModal(); closeSidebar();
+};
+$('#saveSettings').onclick = () => {
+  Object.assign(settings, {
+    name: $('#sName').value.trim(), persona: $('#sPersona').value.trim(),
+    mode: $('#sMode').value, endpoint: $('#sEndpoint').value.trim() || 'api.php', passcode: $('#sPass').value,
+    provider: $('#sProvider').value, apiKey: $('#sKey').value.trim(), model: $('#sModel').value.trim(),
+    lang: $('#sLang').value, voice: $('#sVoice').value, rate: +$('#sRate').value, autoSpeak: $('#sAuto').checked
+  });
+  saveSettings(); $('#settingsDlg').close(); greet(); toast('Settings saved');
+};
+$('#testBtn').onclick = async () => {
+  const out = $('#testOut'); out.textContent = 'Testing…';
+  try {
+    const r = await fetch(($('#sEndpoint').value.trim() || 'api.php') + '?ping=1');
+    const j = await r.json();
+    out.textContent = j.ok ? `✓ Server OK · providers with keys: ${(j.providers || []).join(', ') || 'none — add a key in config.php'}` : '✗ ' + (j.error || 'Not OK');
+  } catch { out.textContent = '✗ Could not reach api.php from this page.'; }
+};
+$('#exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify({app: 'murad-ai', exported: new Date().toISOString(), chats, memories}, null, 1)], {type: 'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `murad-ai-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+};
+$('#importBtn').onclick = () => $('#importFile').click();
+$('#importFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const j = JSON.parse(await f.text());
+    const ids = new Set(chats.map(c => c.id));
+    (j.chats || []).forEach(c => { if (!ids.has(c.id)) chats.push(c); });
+    (j.memories || []).forEach(m => { if (!memories.some(x => x.text === m.text)) memories.push(m); });
+    saveChats(); saveMem(); renderSidebar(); toast('Imported');
+  } catch { toast('That file is not a Murad AI backup'); }
+  e.target.value = '';
+};
+$('#clearBtn').onclick = () => {
+  if (!confirm('Delete ALL chats and memories on this device? This cannot be undone.')) return;
+  chats = []; memories = []; current = null; saveChats(); saveMem(); renderChat(); $('#settingsDlg').close(); toast('Everything deleted');
+};
+function renderMem() {
+  $('#memList').innerHTML = memories.length ? memories.slice().reverse().map(m => `<div class="memitem"><div>${esc(m.text)}<small>${esc(fmtFull(m.ts))}</small></div><button data-mid="${m.id}" title="Forget">✕</button></div>`).join('') : '<div class="empty">Nothing saved yet.</div>';
+}
+$('#memoryBtn').onclick = () => { renderMem(); $('#memoryDlg').showModal(); closeSidebar(); };
+$('#memList').onclick = e => { const b = e.target.closest('[data-mid]'); if (b) { memories = memories.filter(m => m.id !== b.dataset.mid); saveMem(); renderMem(); } };
+const addMem = () => { const v = $('#memInput').value.trim(); if (!v) return; memories.push({id: uid(), text: v, ts: Date.now()}); saveMem(); $('#memInput').value = ''; renderMem(); };
+$('#memAdd').onclick = addMem; $('#memInput').onkeydown = e => { if (e.key === 'Enter') addMem(); };
+
+/* =========================================================
+   Boot
+   ========================================================= */
+(async function boot() {
+  chats = await DB.get('chats', []);
+  memories = await DB.get('memories', []);
+  Object.assign(settings, await DB.get('settings', {}));
+  if (location.protocol === 'file:' && settings.mode === 'server' && !settings._askedDirect) {
+    settings._askedDirect = true; saveSettings();
+    setTimeout(() => toast('Opened as a local file: use Settings → Direct mode, or upload to your website.', 6000), 800);
+  }
+  renderChat(); updateSend();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
